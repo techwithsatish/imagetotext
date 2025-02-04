@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image to Text OCR Tool - Extract Text from Images</title>
+  <meta name="description" content="Convert images to text with our free OCR tool. Upload an image and extract the text instantly. Easy to use and fast.">
+  <!-- Open Graph Meta Tags for Social Media Sharing -->
+  <meta property="og:title" content="Image to Text OCR Tool">
+  <meta property="og:description" content="Convert images to text with our free OCR tool. Upload an image and extract the text instantly.">
+  <meta property="og:image" content="image-preview.jpg"> <!-- Optional image preview for social sharing -->
+  <meta property="og:url" content="your-website-url-here">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Custom styling */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+
+    #dropArea {
+      width: 100%;
+      height: 80px;
+      border: 3px dashed #007bff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #007bff;
+      font-size: 18px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .output {
+      font-size: 16px;
+      color: #333;
+      white-space: pre-wrap;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .image-preview-container,
+    .extracted-text-container {
+      display: none;
+    }
+
+    .col-md-6 {
+      margin-top: 20px;
+    }
+
+    h1 {
+      font-size: 26px;
+      color: #333;
+    }
+
+    /* Loading Spinner */
+    .spinner-container {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      border-width: 5px;
+    }
+
+    @media (max-width: 767px) {
+      .container {
+        padding: 15px;
+      }
+
+      #dropArea {
+        height: 50px;
+      }
+
+      button {
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1 class="text-center mb-4">Image to Text OCR Tool</h1>
+    <p class="text-center">Use our online OCR tool to easily convert images to text. Simply upload an image and extract the text instantly.</p>
+
+   
+
+    <div class="row">
+      <!-- Drag and Drop Area -->
+      <div class="col-12">
+        <div id="dropArea">
+          <span>Drag and Drop Image Here</span>
+        </div>
+        <input type="file" id="imageUpload" accept="image/*" />
+      </div>
+    </div>
+
+    <!-- Image Preview and Extracted Text (Initially Hidden) -->
+    <div class="row image-preview-container">
+      <!-- Left Column (Image Preview) -->
+      <div class="col-md-6">
+        <h3>Image Preview</h3>
+        <div id="imageContainer"></div>
+      </div>
+
+      <!-- Right Column (Extracted Text) -->
+      <div class="col-md-6 extracted-text-container">
+        <h3>Extracted Text</h3>
+        <div id="outputText" class="output"></div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner (Initially Hidden) -->
+    <div class="row spinner-container" id="loadingSpinner">
+      <div class="col-12">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Extracting text...</p>
+      </div>
+    </div>
+
+    <!-- Extract Text Button -->
+    <div class="row">
+      <div class="col-12">
+        <button id="extractTextBtn">Extract Text</button>
+      </div>
+    </div>
+    <hr/>
+    <!-- Benefits Section -->
+    <section>
+        <h2>Benefits of Using Our OCR Tool</h2>
+        <ul>
+          <li>Extracts text from images accurately.</li>
+          <li>Fast processing with minimal effort.</li>
+          <li>No need to install any software – works entirely online.</li>
+          <li>Free to use with no limits on the number of images you can process.</li>
+          <li>Supports a wide range of image formats including PNG, JPG, and more.</li>
+        </ul>
+      </section>
+  
+      <!-- How to Use Section -->
+      <section>
+        <h2>How to Use the OCR Tool</h2>
+        <ol>
+          <li>Click on the "Drag and Drop Image Here" area to upload an image or drag and drop an image from your computer.</li>
+          <li>Once the image is uploaded, click on the "Extract Text" button.</li>
+          <li>Our tool will process the image and display the extracted text on the right side of the screen.</li>
+          <li>You can copy the extracted text and use it as needed.</li>
+        </ol>
+      </section>
+
+
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+  <!-- Tesseract.js for OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+
+  <script>
+    // Drag and drop area handling
+    const dropArea = document.getElementById('dropArea');
+    const imageUpload = document.getElementById('imageUpload');
+    const extractTextBtn = document.getElementById('extractTextBtn');
+    const imageContainer = document.getElementById('imageContainer');
+    const outputText = document.getElementById('outputText');
+    const imagePreviewContainer = document.querySelector('.image-preview-container');
+    const extractedTextContainer = document.querySelector('.extracted-text-container');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    // Allow file input selection through clicking the drop area
+    dropArea.addEventListener('click', () => {
+      imageUpload.click();
+    });
+
+    // Handle dragover and drop events
+    dropArea.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropArea.style.backgroundColor = '#e9f7ff';
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.style.backgroundColor = '';
+    });
+
+    dropArea.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropArea.style.backgroundColor = '';
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        loadImage(file);
+      }
+    });
+
+    // Handle file input change event
+    imageUpload.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        loadImage(file);
+      }
+    });
+
+    // Function to load and display the image
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function () {
+          imageContainer.innerHTML = ''; // Clear any previous image
+          const imgElement = document.createElement('img');
+          imgElement.src = img.src;
+          imgElement.classList.add('image-preview');
+          imageContainer.appendChild(imgElement);
+
+          // Clear previous extracted text
+          outputText.innerText = '';
+
+          // Show image preview and extracted text area
+          imagePreviewContainer.style.display = 'flex';  // Changed to flex for side-by-side
+          extractedTextContainer.style.display = 'block';
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Function to extract text from the image
+    extractTextBtn.addEventListener('click', () => {
+      const imgElement = imageContainer.querySelector('img');
+      if (imgElement) {
+        // Show loading spinner
+        loadingSpinner.style.display = 'block';
+
+        // Hide the extracted text area until extraction is complete
+        extractedTextContainer.style.display = 'none';
+
+        Tesseract.recognize(
+          imgElement,
+          'eng',
+          {
+            logger: (m) => console.log(m), // Optional logger to see OCR progress
+          }
+        ).then(({ data: { text } }) => {
+          // Hide loading spinner and show extracted text
+          loadingSpinner.style.display = 'none';
+          outputText.innerText = text;
+
+          // Show extracted text area
+          extractedTextContainer.style.display = 'block';
+        }).catch((err) => {
+          // Hide spinner if error occurs
+          loadingSpinner.style.display = 'none';
+          console.error('OCR failed: ', err);
+          alert('Text extraction failed. Please try another image.');
+        });
+      } else {
+        alert('Please upload an image first.');
+      }
+    });
+  </script>
+
+</body>
+
+</html>
